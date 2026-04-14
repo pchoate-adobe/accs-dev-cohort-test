@@ -195,7 +195,16 @@ export default async function decorate(block) {
     })($gallery),
 
     // Header
-    pdpRendered.render(ProductHeader, {})($header),
+    pdpRendered.render(ProductHeader, {
+      slots: {
+        Title: (ctx) => {
+          const tagline = document.createElement('div');
+          tagline.classList.add('pdp-tagline');
+          tagline.textContent = 'Free shipping on orders over $50';
+          ctx.appendSibling(tagline);
+        },
+      },
+    })($header),
 
     // Price
     pdpRendered.render(ProductPrice, {})($price),

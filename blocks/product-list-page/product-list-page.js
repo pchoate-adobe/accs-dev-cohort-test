@@ -74,9 +74,8 @@ export default async function decorate(block) {
       phrase: '', // search all products in the category
       currentPage: searchState.currentPage,
       pageSize,
-      sort: searchState?.sort?.length ? searchState.sort : [{ attribute: 'position', direction: 'DESC' }],
       filter: [
-        { attribute: 'categoryPath', eq: config.urlpath }, // Add category filter
+        { attribute: 'categoryPath', contains: config.urlpath }, // Add category filter
         // Always add visibility filter to the request
         visibilityFilter,
         ...userFilters,
