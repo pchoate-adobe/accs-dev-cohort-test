@@ -3,7 +3,7 @@ import fs from 'fs';
 import he from 'he';
 import productSearchQuery from './queries/products.graphql.js';
 import { variantsFragment } from './queries/variants.graphql.js';
-const basePath = 'https://www.aemshop.net';
+const basePath = 'https://main--accs-dev-cohort-test--pchoate-adobe.aem.live';
 const configFile = `${basePath}/config.json`;
 
 /**
@@ -232,12 +232,12 @@ async function addVariantsToProducts(products, config) {
   const query = `
   query Q {
       ${products.map((product, i) => {
-        return `
+    return `
         item_${i}: variants(sku: "${product.productView.sku}") {
           ...ProductVariant
         }
         `
-      }).join('\n')}
+  }).join('\n')}
     }${variantsFragment}`;
 
   const response = await performCatalogServiceQuery(config, query, null);
