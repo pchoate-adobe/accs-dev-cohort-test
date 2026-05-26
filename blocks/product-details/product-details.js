@@ -138,10 +138,10 @@ export default async function decorate(block) {
     $tagline.textContent = 'Free Shipping on Orders Over $50';
   }
 
-  events.on('pdp/data', (product) => {
-    if (!product) return;
-    const value = product.shortDescription;
-    if (product.inStock) {
+  events.on('pdp/data', (pdpProduct) => {
+    if (!pdpProduct) return;
+    const value = pdpProduct.shortDescription;
+    if (pdpProduct.inStock) {
       $stock.textContent = '● In Stock';
       $stock.className = 'product-details__stock stock-badge stock-badge--in-stock';
     } else {
