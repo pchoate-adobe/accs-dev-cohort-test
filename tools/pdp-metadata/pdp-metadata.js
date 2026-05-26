@@ -65,6 +65,10 @@ async function performCatalogServiceQuery(config, query, variables) {
 
   const apiCall = await commerceEndpointWithQueryParams(config);
 
+  console.log('[DEBUG] Request URL:', apiCall.toString());
+  console.log('[DEBUG] Request headers:', JSON.stringify(headers, null, 2));
+  console.log('[DEBUG] Query (first 200 chars):', query.substring(0, 200));
+
   const response = await fetch(apiCall, {
     method: 'POST',
     headers,
@@ -74,11 +78,19 @@ async function performCatalogServiceQuery(config, query, variables) {
     }),
   });
 
+  console.log('[DEBUG] Response status:', response.status, response.statusText);
+
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('[DEBUG] Error response body:', errorBody);
     return null;
   }
 
   const queryResponse = await response.json();
+
+  if (queryResponse.errors) {
+    console.error('[DEBUG] GraphQL errors:', JSON.stringify(queryResponse.errors, null, 2));
+  }
 
   return queryResponse.data;
 }
@@ -228,27 +240,30 @@ const getProducts = async (config, pageNumber) => {
   return [];
 };
 
-async function addVariantsToProducts(products, config) {
-  const query = `
-  query Q {
-      ${products.map((product, i) => {
-    return `
-        item_${i}: variants(sku: "${product.productView.sku}") {
-          ...ProductVariant
-        }
-        `
-  }).join('\n')}
-    }${variantsFragment}`;
+async function addVariantsToProducts(products, config, batchSize = 5) {
+  for (let start = 0; start < products.length; start += batchSize) {
+    const batch = products.slice(start, start + batchSize);
+    const query = `
+    query Q {
+        ${batch.map((product, i) => `
+          item_${i}: variants(sku: "${product.productView.sku}") {
+            ...ProductVariant
+          }
+        `).join('\n')}
+      }${variantsFragment}`;
 
-  const response = await performCatalogServiceQuery(config, query, null);
+    const response = await performCatalogServiceQuery(config, query, null);
 
-  if (!response) {
-    throw new Error('Could not fetch variants');
+    if (!response) {
+      throw new Error(`Could not fetch variants for batch starting at index ${start}`);
+    }
+
+    batch.forEach((product, i) => {
+      product.variants = response[`item_${i}`];
+    });
+
+    console.log(`Fetched variants for products ${start + 1}-${start + batch.length} of ${products.length}`);
   }
-
-  products.forEach((product, i) => {
-    product.variants = response[`item_${i}`];
-  });
 }
 
 (async () => {

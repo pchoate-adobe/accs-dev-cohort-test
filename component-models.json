@@ -498,6 +498,29 @@
     ]
   },
   {
+    "id": "promo-banner",
+    "fields": [
+      {
+        "component": "text",
+        "name": "category-id",
+        "label": "Category ID",
+        "description": "Commerce category ID (defaults to 2 if empty)"
+      },
+      {
+        "component": "text",
+        "name": "heading",
+        "label": "Heading",
+        "value": "Featured Products"
+      },
+      {
+        "component": "text",
+        "name": "max-products",
+        "label": "Max Products",
+        "value": "4"
+      }
+    ]
+  },
+  {
     "id": "targeted-block",
     "fields": [
       {
