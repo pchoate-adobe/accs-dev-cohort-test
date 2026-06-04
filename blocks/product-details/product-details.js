@@ -38,6 +38,8 @@ import { IMAGES_SIZES } from '../../scripts/initializers/pdp.js';
 import '../../scripts/initializers/cart.js';
 import '../../scripts/initializers/wishlist.js';
 
+
+
 /**
  * Checks if the page has prerendered product JSON-LD data
  * @returns {boolean} True if product JSON-LD exists and contains @type=Product
@@ -71,6 +73,43 @@ function updateAddToCartButtonText(addToCartInstance, inCart, labels) {
   }
 }
 
+const SPEC_ATTR_KEYS = [
+  'horsepower', 'voltage', 'phase', 'rpm', 'efficiency_rating',
+  'safety_rating', 'switch_type', 'max_pressure', 'port_size',
+  'operating_pressure', 'media', 'mounting_type',
+  'control', 'display', 'power', 'protection',
+];
+
+/** Catalog Service ProductView uses `id` for the attribute code; GraphQL may use `name`. */
+function getAttributeCode(attr) {
+  return attr?.id ?? attr?.name;
+}
+
+function renderSpecChips(container, product) {
+  if (!container || !product?.attributes?.length) {
+    if (container) container.replaceChildren();
+    return;
+  }
+
+  const withCode = product.attributes
+    .map((attr) => ({ attr, code: getAttributeCode(attr) }))
+    .filter(({ attr, code }) => code && attr.value);
+
+  const preferred = withCode.filter(({ code }) => SPEC_ATTR_KEYS.includes(code));
+  const rest = withCode.filter(({ code }) => !SPEC_ATTR_KEYS.includes(code));
+  const chips = [...preferred, ...rest].slice(0, 4).map(({ attr }) => attr);
+
+  container.replaceChildren(
+    ...chips.map((attr) => {
+      const chip = document.createElement('span');
+      chip.className = 'spec-chip';
+      chip.setAttribute('role', 'listitem');
+      chip.textContent = `${attr.label}: ${attr.value}`;
+      return chip;
+    }),
+  );
+}
+
 export default async function decorate(block) {
   const eventProduct = events.lastPayload('pdp/data') ?? null;
   // bug: the pdp sends an object with event data even if product is not found.
@@ -98,6 +137,7 @@ export default async function decorate(block) {
         <div class="product-details__stock" role="status" aria-live="polite"></div>
         <div class="product-details__price"></div>
         <div class="product-details__gallery"></div>
+        <div class="product-details__spec-chips" aria-label="Key specifications"></div>
         <div class="product-details__short-description"></div>
         <div class="product-details__gift-card-options"></div>
         <div class="product-details__configuration">
@@ -131,6 +171,7 @@ export default async function decorate(block) {
   const $description = fragment.querySelector('.product-details__description');
   const $attributes = fragment.querySelector('.product-details__attributes');
   const $customAttribute = fragment.querySelector('.product-details__custom-attribute');
+  const $specChips = fragment.querySelector('.product-details__spec-chips');
 
   block.replaceChildren(fragment);
 
@@ -157,6 +198,8 @@ export default async function decorate(block) {
       </div>
 `;
     }
+
+    renderSpecChips($specChips, pdpProduct);
   }, { eager: true });
 
   const gallerySlots = {
